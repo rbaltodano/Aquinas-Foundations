@@ -16,8 +16,9 @@ The software architecture is modeled after the *Disputatio*:
 
 The current development topology runs the model and tree database in a local FastAPI process on
 the user's Mac and connects over local HTTP. This is not a relaxation of the production
-local-only requirement; it is an integration stage. The current iOS conversation snapshot uses
-`UserDefaults`, and a structured SwiftData/file-backed migration remains planned.
+local-only requirement; it is an integration stage. iOS conversation state is SwiftData-backed
+with file-backed attachments (`AquinasPersistence`, per `PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md`);
+a legacy `UserDefaults` snapshot is imported once on first launch after that store shipped.
 
 ## Functional Requirements
 - **Branching Logic:** Ability to fork a conversation thread into a new "argumentative branch."

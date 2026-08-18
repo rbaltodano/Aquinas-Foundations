@@ -40,9 +40,10 @@ Debug simulator builds can use `--force-backend-model` while the Mac backend is 
 - [INSIGHT-TREE.md](INSIGHT-TREE.md) — current design spec for the model-driven Insight Tree:
   automatic Node Concept extraction, manual Insights, layout, relatedness, budding, Midpoint, and
   model seams.
-- [PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md](PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md) — planned
-  migration away from whole-snapshot `UserDefaults`; its status section distinguishes current
-  iOS and backend persistence from future work.
+- [PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md](PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md) — the
+  SwiftData migration away from whole-snapshot `UserDefaults`, now implemented; its status section
+  distinguishes what's shipped from what remains (the dedicated Insights popup UI, in-place
+  field-level diffing, backend deletion-tombstone coordination).
 
 Implementation happens in the sibling repos: `../Aquinas-iOS` (SwiftUI app — has its own CLAUDE.md with build instructions) and `../Aquinas_Backend` (FastAPI + MLX model server). If a session here turns into code changes, prefer starting/continuing it from the repo being changed.
 

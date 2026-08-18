@@ -1,8 +1,67 @@
 # Persistent Memory Implementation Plan
 
-> Status: planned, not implemented. As of the current checkpoint, iOS still JSON-encodes the full
-> `InquiryPersistenceSnapshot` to `UserDefaults`. Do not assume the SwiftData types, repository,
-> attachment store, or migration marker described below exist.
+> Status: implemented, with noted deviations from this plan's original shape and gaps called out
+> below. iOS is now SwiftData-backed (`Aquinas-iOS/Persistence/SwiftData/`) with file-backed
+> attachments and a one-time migration from the legacy `UserDefaults` snapshot. This document's
+> designed shape (an `InquiryRepository` type, `.modelContainer(for:)` in `Aquinas_iOSApp.swift`,
+> a dedicated Insights popup UI) does not match 1:1 what shipped — see "Implementation status"
+> below for what changed and why, before assuming any specific type/file name in the rest of this
+> document exists verbatim.
+
+## Implementation status
+
+**Implemented:** `PersistedConversation`/`PersistedBranch`/`PersistedChatBlock`/`PersistedAttachment`/
+`PersistedInsightLibraryEntry` SwiftData models (`Persistence/SwiftData/PersistedModels.swift`);
+a `ModelContainer` singleton and all read/write/sync/mapping logic
+(`Persistence/SwiftData/AquinasPersistence.swift`); file-backed attachment storage under
+Application Support (`Persistence/SwiftData/AttachmentFileStore.swift`); a one-time migration from
+the legacy `UserDefaults` snapshot, run from `Aquinas_iOSApp.init()`; a last-active-conversation
+`UserDefaults` preference; a SwiftData-backed global Insight Library
+(`PersistedInsightLibraryEntry`); automated round-trip/deletion/sibling-independence tests
+(`Aquinas-iOSTests/ConversationPersistenceTests.swift`).
+
+**Deliberately built differently than this plan describes:** there is no separate
+`InquiryRepository` type or `.modelContainer(for:)` environment injection in
+`Aquinas_iOSApp.swift`. Nearly every call site in `ContentView.swift`/`CurrentConversation.swift`
+already funneled through exactly two static stores — `CurrentConversationsStore` (the real,
+live-read conversation store; **not** `InquiryPersistenceStore`, which this plan originally
+assumed was the live store but turned out to be dead code writing to a separate, never-read
+`UserDefaults` key) and `InsightLibraryStore`. Both kept their original `load()`/`save(_:)`
+signatures and now delegate internally to `AquinasPersistence`, so the large majority of call
+sites in those two files needed zero edits — only `ContentView.swift`'s `renameConversation`
+changed, to fix it using the dead store. This was a deliberate choice to minimize edit surface in
+a ~4,500-line pair of files this pass could not compile-check (see "Verification" below), not an
+oversight of steps 3/6/8's literal wording.
+
+Per-conversation saves sync each branch/chat-block/attachment row by id against what's already
+persisted rather than deleting and recreating the conversation's whole row tree, so SwiftData's
+own change tracking skips writing any row whose content didn't change — this is what step 8's
+"replace whole-snapshot saves with targeted writes" resolves to under the preserved-signature
+design above, rather than literal per-call-site rewrites.
+
+**Not implemented / deferred:**
+- The dedicated cross-conversation Insights popup UI ("Insights Popup Integration" section below)
+  is a new UI feature, not a persistence change, and is separate follow-up work.
+- `ConversationInsightMembershipStore`, `InsightTreeAnalysisQueue`, and `InsightDiscoveryStore`
+  remain `UserDefaults`-backed by design, not migrated to SwiftData tables. They store only ID
+  strings and retry counters, never transcript text or image bytes — they were never the
+  whole-snapshot-blob growth problem this plan exists to fix, so moving them was deprioritized
+  rather than silently skipped. Branch-level compaction checkpoints
+  (`compactedContext`/`compactedThroughBlockCount`) *are* migrated, since those are plain fields
+  on `ChatBranch` that flow through the SwiftData branch row like every other branch field.
+- True field-level diffing within one changed branch is not implemented: a branch with any change
+  re-syncs its whole row tree (still per-row change-tracked, so unchanged individual chat
+  blocks/attachments within it still cost nothing extra) rather than diffing at, say, the single
+  edited field.
+- Deletion coordination with the backend Insight Tree store (step 14) remains open.
+
+**Verification:** this implementation was written and reviewed but not compiled or run — the
+session that wrote it had no macOS/Xcode toolchain available. Build against a concrete arm64
+simulator destination and run `Aquinas-iOSTests` (including the new
+`ConversationPersistenceTests` suite) before relying on it; also run the manual scenarios in "Test
+Plan" below on a real device/simulator, since a passing build and test suite verify compilation
+and the tested behaviors, not full end-to-end product correctness (e.g. Make Node / Midpoint /
+canvas-physics interaction with the new store hasn't been exercised in a running app at all).
 
 ## Summary
 
@@ -12,11 +71,16 @@ The new system should use structured local persistence for conversation data and
 
 ## Current persistence inventory
 
-The production migration must account for all storage that exists now:
+This section describes the pre-migration baseline this plan replaced — see "Implementation
+status" above for what actually exists now.
 
-- `InquiryPersistenceStore` stores conversations, the active conversation ID, branches, chat
+The production migration had to account for all storage that existed:
+
+- `CurrentConversationsStore` stored conversations, the active conversation ID, branches, chat
   blocks, uploads (including image bytes), promoted Insight IDs, and per-branch hidden compaction
-  state (`compactedContext` and `compactedThroughBlockCount`) in one `UserDefaults` snapshot.
+  state (`compactedContext` and `compactedThroughBlockCount`) in one `UserDefaults` snapshot. (An
+  earlier version of this document named `InquiryPersistenceStore` here — that store used a
+  separate, never-read `UserDefaults` key and was already dead code, not the live store.)
 - `InsightLibraryStore` owns globally bookmarked contextual definitions on the client.
 - `ConversationInsightMembershipStore` stores only the stable IDs that associate global saved
   Insights with a conversation.
@@ -258,22 +322,48 @@ When a user saves an insight from any conversation, it should become available i
 
 ## Implementation Steps
 
-1. Add SwiftData model classes for conversations, branches, chat blocks, concepts, and attachments.
-2. Add a model container in `Aquinas_iOSApp.swift`.
-3. Create `InquiryRepository` as the only layer that reads/writes SwiftData.
-4. Create `AttachmentStore` for writing, reading, and deleting files in Application Support.
-5. Add mappers between current UI structs and persisted models.
-6. Replace `InquiryPersistenceStore.save/load` usage in `ActiveInquiryView` with repository calls.
-7. Keep `InquiryPersistenceStore` only for one-time migration, then mark it deprecated.
-8. Update conversation switching, new chat, delete, rename, pin, branch creation, and submit flows to call the repository.
-9. Add a last-active-conversation preference.
-10. Add migration from the current `UserDefaults` JSON snapshot.
-11. Add repository methods for saved insight library reads/writes and active-conversation insight filtering.
-12. Add manual and automated tests for restore, switching, deletion, insights, and attachments.
-13. Migrate conversation Insight membership, pending response-analysis jobs, discovery state, and
-    branch compaction checkpoints without changing stable IDs.
-14. Define deletion coordination with the backend tree store; client deletion and backend
-    tombstones currently have distinct responsibilities.
+1. ~~Add SwiftData model classes for conversations, branches, chat blocks, concepts, and
+   attachments.~~ Implemented, with embedded `ConceptDefinition`/`ResponsePresentationMetadata`
+   content stored as an encoded JSON blob per row rather than exploded into further relationships
+   — see "Implementation status" above.
+2. ~~Add a model container.~~ Implemented as `AquinasPersistence.container`, a dedicated
+   singleton rather than `.modelContainer(for:)` in `Aquinas_iOSApp.swift` — every read/write call
+   site is a static enum function outside SwiftUI's environment, not a `View`.
+3. Not implemented as its own `InquiryRepository` type. `AquinasPersistence` is the sync/mapping
+   layer; `CurrentConversationsStore`/`InsightLibraryStore` keep their original names and
+   signatures as the call-site-facing boundary instead — see "Implementation status" above.
+4. ~~Create an attachment store for writing, reading, and deleting files in Application
+   Support.~~ Implemented as `AttachmentFileStore`.
+5. ~~Add mappers between current UI structs and persisted models.~~ Implemented, inside
+   `AquinasPersistence.swift` rather than a separate mapper file.
+6. Not applicable as written — there is no `ActiveInquiryView`; `CurrentConversationsStore.save/load`
+   usage across `ContentView.swift`/`CurrentConversation.swift` needed no call-site changes, since
+   that store's signature didn't change (see "Implementation status" above). The one broken call
+   site (`ContentView.swift`'s `renameConversation`, which wrote to the dead
+   `InquiryPersistenceStore`) is fixed to use `CurrentConversationsStore`.
+7. `InquiryPersistenceStore` is marked `@available(*, deprecated)` and left otherwise unused —
+   it turned out to already be dead code (a separate, never-read `UserDefaults` key), not the
+   live store this plan originally assumed, so it was never a migration source.
+8. ~~Update conversation switching, new chat, delete, rename, pin, branch creation, and submit
+   flows.~~ Implemented — via the preserved-signature store, not individual call-site rewrites;
+   see "Implementation status" above for what "targeted writes" resolves to under that design.
+9. ~~Add a last-active-conversation preference.~~ Implemented
+   (`aquinas.persistence.active-conversation-id` in `AquinasPersistence`).
+10. ~~Add migration from the current `UserDefaults` JSON snapshot.~~ Implemented
+    (`AquinasPersistence.runMigrationIfNeeded()`, called from `Aquinas_iOSApp.init()`).
+11. ~~Add reads/writes for the saved insight library.~~ Implemented
+    (`PersistedInsightLibraryEntry`). Active-conversation insight *filtering* is unchanged —
+    `ConversationInsightMembershipStore` remains `UserDefaults`-backed by design; see
+    "Implementation status" above.
+12. Partially implemented: automated round-trip/sibling-independence/deletion/Insight-Library
+    tests exist (`Aquinas-iOSTests/ConversationPersistenceTests.swift`). The manual scenarios
+    below are not yet run — this pass had no macOS/Xcode toolchain to run them on.
+13. Partially implemented: branch compaction checkpoints migrated (they're plain `ChatBranch`
+    fields, now SwiftData columns). Insight membership, pending response-analysis jobs, and
+    discovery state remain on their existing `UserDefaults` stores, deliberately not moved into
+    SwiftData tables — see "Implementation status" above. No stable IDs changed anywhere in this
+    work.
+14. Not implemented — deletion coordination with the backend tree store remains open.
 
 ## Test Plan
 
