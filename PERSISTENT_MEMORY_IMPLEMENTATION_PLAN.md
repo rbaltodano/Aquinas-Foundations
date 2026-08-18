@@ -55,13 +55,18 @@ design above, rather than literal per-call-site rewrites.
   edited field.
 - Deletion coordination with the backend Insight Tree store (step 14) remains open.
 
-**Verification:** this implementation was written and reviewed but not compiled or run — the
-session that wrote it had no macOS/Xcode toolchain available. Build against a concrete arm64
-simulator destination and run `Aquinas-iOSTests` (including the new
-`ConversationPersistenceTests` suite) before relying on it; also run the manual scenarios in "Test
-Plan" below on a real device/simulator, since a passing build and test suite verify compilation
-and the tested behaviors, not full end-to-end product correctness (e.g. Make Node / Midpoint /
+**Verification: still outstanding as of this writing.** This implementation was written and
+reviewed but not compiled or run — the session that wrote it had no macOS/Xcode toolchain
+available. `../Aquinas-iOS/CLAUDE.md`'s "Handoff: verify the SwiftData persistence migration"
+section is the concrete, ordered checklist for closing this out (build against a concrete arm64
+simulator destination, run `Aquinas-iOSTests` including the new `ConversationPersistenceTests`
+suite, manually verify relaunch-survival and the `renameConversation` fix, back up real device
+data before installing on hardware with existing conversation history). Also run the manual
+scenarios in "Test Plan" below, since a passing build and test suite verify compilation and the
+tested behaviors, not full end-to-end product correctness (e.g. Make Node / Midpoint /
 canvas-physics interaction with the new store hasn't been exercised in a running app at all).
+Once verification is complete, update this paragraph to say so — note anything that didn't pass
+clean and what fixed it, rather than deleting the history.
 
 ## Summary
 
