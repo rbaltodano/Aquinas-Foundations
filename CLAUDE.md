@@ -37,6 +37,9 @@ Debug simulator builds can use `--force-backend-model` while the Mac backend is 
 - [SPECIFICATION.md](SPECIFICATION.md) / [FUNCTIONALITY.md](FUNCTIONALITY.md) — what the app should do.
 - [MODEL-INTEGRATION.md](MODEL-INTEGRATION.md) — how the Aquinas model, MiniLM embeddings, backend,
   persistence, and iOS client work together; includes structured contracts and implementation order.
+- [MODEL-QUANTIZATION-RESEARCH.md](MODEL-QUANTIZATION-RESEARCH.md) — exploratory: whether a larger
+  base model quantized further down could beat the current shipped checkpoint on-device; current
+  candidate survey and the pending feasibility probe. Not implementation status.
 - [INSIGHT-TREE.md](INSIGHT-TREE.md) — current design spec for the model-driven Insight Tree:
   automatic Node Concept extraction, manual Insights, layout, relatedness, budding, Midpoint, and
   model seams.
