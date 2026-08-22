@@ -75,16 +75,32 @@ digits of seconds and generation in the 3–4x range for comparable output — u
 ## Next step
 
 `../Aquinas-iOS/Features/Developer/LiteRTDeviceProbe.swift` already supports pointing the existing
-diagnostic probe at an arbitrary external model file — no code change is required. Run:
+diagnostic probe at an arbitrary external model file — no code change is required. This requires a
+local macOS environment with Xcode and either the arm64 iOS Simulator or a connected device; it
+cannot be run from a cloud/remote session without a macOS toolchain.
 
-```
---litert-probe --litert-probe-auto --litert-model-path /absolute/path/to/gemma-4-12B-it-gpu.litertlm
-```
-
-against a Debug build on a base iPhone (or the arm64 iOS Simulator first) and record cold-load time,
-generation time, and stability against the baseline above. This requires a local macOS environment
-with Xcode and either the simulator or a connected device — it cannot be run from a cloud/remote
-session without a macOS toolchain.
+1. **Confirm the file is still current before downloading.** The `litert-community/gemma-4-12B-it-litert-lm`
+   Hugging Face repo's commit history includes a "Delete gemma-4-12b-it.litertlm" commit under a
+   different filename casing than the variant named below — check the repo's file listing on `main`
+   (e.g. `https://huggingface.co/litert-community/gemma-4-12B-it-litert-lm/tree/main`) and confirm
+   `gemma-4-12B-it-gpu.litertlm` (or an equivalent current filename) is actually present before
+   proceeding. If the filename has changed, use whatever the current GPU-backend `.litertlm` variant
+   is called.
+2. **Get Hugging Face access to the model.** Gemma models are gated: log into a Hugging Face account,
+   accept Google's Gemma license on the model page, then authenticate locally with
+   `huggingface-cli login` (or export an `HF_TOKEN` with read access) before downloading — an
+   unauthenticated pull will fail.
+3. **Download the model**, e.g.:
+   ```
+   huggingface-cli download litert-community/gemma-4-12B-it-litert-lm gemma-4-12B-it-gpu.litertlm --local-dir ~/Downloads
+   ```
+4. **Build and run the probe** against a Debug build on a base iPhone (or the simulator first), with:
+   ```
+   --litert-probe --litert-probe-auto --litert-model-path /absolute/path/to/gemma-4-12B-it-gpu.litertlm
+   ```
+5. **Record** cold-load time, generation time, model size, and post-completion stability (does it stay
+   alive, same as the existing checkpoint's 25+ second stability check) against the baseline in this
+   document, and update this file's "Expected cost" section with the measured numbers once available.
 
 Per the existing gate in `../Aquinas-iOS/CLAUDE.md`: never promote a candidate before simulator and
 base-iPhone load, latency, memory, stability, and blind answer-quality checks all pass. This probe
