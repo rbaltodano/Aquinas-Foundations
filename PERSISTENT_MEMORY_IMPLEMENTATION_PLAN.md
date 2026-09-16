@@ -68,6 +68,12 @@ canvas-physics interaction with the new store hasn't been exercised in a running
 Once verification is complete, update this paragraph to say so — note anything that didn't pass
 clean and what fixed it, rather than deleting the history.
 
+> **Immediate safety requirement:** source control and Xcode builds do not back up `UserDefaults`.
+> Before further physical-device model experiments, add a user-visible export/import path and an
+> automatic rotating backup outside the live preferences domain. Model probes must use a disposable
+> bundle/container; never run `devicectl` app-data copies with `--remove-existing-content true`
+> against the production bundle. This protection precedes the larger SwiftData migration.
+
 ## Summary
 
 Replace the current prototype persistence system with a production-ready local storage layer. The current implementation JSON-encodes the entire conversation canvas into `UserDefaults`, including uploaded image data. That is fine for early prototyping, but it will get slower and heavier as conversations, branches, attachments, and canvases grow.

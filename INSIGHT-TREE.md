@@ -3,7 +3,9 @@
 > Status: active spec for the response-driven, model-assisted Insight Tree.
 > Conversation trees use persisted backend MiniLM topology; the global Insight Library canvas
 > remains a client-side graph using `NLEmbedding`. Its accepted bookmark snapshot is persisted
-> separately from the live Insight Library.
+> separately from the live Insight Library. Study Topic trees use the topic UUID as an isolated
+> persisted MiniLM tree scope and reconcile the accepted aggregate of their conversations' saved
+> Insights when opened; the accepted aggregate remains available as the on-device fallback.
 > See `MODEL-INTEGRATION.md` for the system-wide model contracts, backend boundaries, persistence,
 > and implementation order. This file remains the source of truth for Insight Tree behavior.
 
@@ -51,6 +53,13 @@ The response-analysis operation is idempotent by conversation and response ID. I
 are persisted, so retries return the original mutation. iOS stores a durable identifiers-only queue
 and reconstructs the question and answer from conversation persistence when retrying.
 
+On a physical phone, loopback (`127.0.0.1` or `localhost`) cannot reach the Mac backend. When that
+is the configured URL, iOS must not enqueue or endlessly retry response-analysis work, must clear
+stale unreachable jobs, and must reveal its existing local fallback canvas instead of remaining on
+`Mapping…` or a blank star field. That fallback can display locally known/saved concepts, but it
+does not create the persisted automatic Node topology described above. Full offline parity requires
+an iOS `all-MiniLM-L6-v2` pipeline plus local tree assignment/persistence.
+
 ### Manual save remains separate
 
 1. A model response renders certain key terms/phrases **highlighted + underlined**. Foundational
@@ -75,6 +84,17 @@ are not in its last accepted snapshot, a confirmation pill appears above the mod
 Choosing **Yes** replaces the snapshot with the current deduplicated bookmark library and rebuilds
 the semantic canvas; choosing **No** preserves the current tree. The prompt may appear again when
 the page is reopened or the bookmark library changes.
+
+### Study Topic Insight Tree updates
+
+A Study Topic tree aggregates the manually saved Insights attached to every conversation whose
+`studyTopicID` matches that topic. Opening a topic offers an explicit update before replacing its
+last accepted aggregate. Once accepted, the topic UUID scopes a distinct persisted backend tree;
+opening the canvas reconciles both additions and removals through `InsightTreeService`, so topics
+cannot borrow membership from one another or from a conversation tree. When the backend is not
+reachable, the accepted aggregate still renders through the client-side fallback. The live
+Aquinas model and embedding provider are injected from the application composition root, never
+replaced by preview mocks.
 
 Seam: `openDynamicDefinition` first calls `AquinasModel.cachedDefinition`; on a miss,
 `requestDynamicDefinition(for:)` calls the conversation-scoped `defineTerm` overload.
@@ -102,6 +122,9 @@ a single **relatedness provider**:
   Insight Library canvas and remains the local provider for previews and client-only features.
   These vector spaces are kept separate; persisted MiniLM topology is never recomputed with
   `NLEmbedding`.
+- **Physical-device development:** use the Mac's reachable LAN address with the backend listening
+  on `0.0.0.0` when persisted automatic topology is required. Loopback intentionally degrades to
+  the limited local fallback described in §2.
 
 The fine-tuned Aquinas language model generates contextual definitions, Node labels, blended
 Insights, and Make Node children. It does **not** invent relatedness numbers.

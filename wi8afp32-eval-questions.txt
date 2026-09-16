@@ -1,0 +1,31 @@
+# Blind eval set for dynamic_wi8_afp32 vs shipped dynamic_wi8_emb4_afp32
+# One question per line. Categories per WI8AFP32-REQUANTIZATION-SCOPING.md Phase 2.
+
+# Scripture chapters (matches AquinasGrounding.swift stopgap entries)
+Tell me about John Chapter 14
+Tell me about John Chapter 3
+Tell me about Matthew Chapter 5
+Tell me about Romans Chapter 8
+Tell me about 1 Corinthians Chapter 13
+Tell me about Psalm 23
+
+# Known prior hallucinations (documented in LLAMA-CPP-MIGRATION-SCOPING.md:39-46)
+What does doxology mean?
+What was the Council of Trent?
+
+# Known prior confusion (MODEL-INTEGRATION.md:226-230)
+What was the Peloponnesian War?
+
+# Authorship/attribution regression check (existing hard-grounded set)
+Who wrote the Didache?
+Was the Didache written by Paul?
+
+# Council/creed regression check (existing hard-grounded set)
+What was the First Council of Nicaea?
+What was the Second Council of Nicaea?
+
+# Ordinary conversational questions (no gotcha — voice/quality regression check)
+What is the meaning of the word prudence?
+How can friendship help a person become more patient?
+What is the difference between faith and reason according to Aquinas?
+Can you explain what natural law is?
