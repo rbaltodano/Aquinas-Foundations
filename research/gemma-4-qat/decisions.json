@@ -1,0 +1,42 @@
+[
+  {
+    "id": "D01",
+    "question": "Minimum device/OS and context",
+    "current_choice": "Base iPhone 17 / 8 GB and 4,096 total tokens remain provisional; no device is currently enumerated.",
+    "status": "provisional",
+    "evidence": ["workspace.md"],
+    "owner": "Aquinas project",
+    "timestamp": "2026-09-18",
+    "affected_task_ids": ["QAT-00", "QAT-02", "QAT-03", "QAT-04", "QAT-08"]
+  },
+  {
+    "id": "D02",
+    "question": "Baseline model/pipeline",
+    "current_choice": "B0 is the 3,862,121,696-byte dynamic_wi8_emb4_afp32 LiteRT package declared by the active iOS manifest, not either older backend LiteRT file.",
+    "status": "frozen",
+    "evidence": ["baseline-identity.json", "workspace.md"],
+    "owner": "Aquinas project",
+    "timestamp": "2026-09-18",
+    "affected_task_ids": ["QAT-00", "QAT-02", "QAT-03", "QAT-04", "QAT-05", "QAT-08"]
+  },
+  {
+    "id": "D03",
+    "question": "Mobile artifact/runtime route",
+    "current_choice": "Undecided. Existing LiteRT-LM wrapper is the first route to inspect; no official QAT candidate has a verified supported route.",
+    "status": "provisional",
+    "evidence": ["workspace.md", "STATUS.md"],
+    "owner": "Aquinas project",
+    "timestamp": "2026-09-18",
+    "affected_task_ids": ["QAT-01", "QAT-03", "QAT-04"]
+  },
+  {
+    "id": "D04",
+    "question": "Time/trials/compute/privacy",
+    "current_choice": "One local M4-L package download is authorized: 3,659,530,240 bytes from pinned LiteRT Community revision, 45-minute transfer budget, 25 GiB disk reserve, no model load/training/export. Other downloads and remote compute remain unauthorized.",
+    "status": "provisional",
+    "evidence": ["STATUS.md", "workspace.md"],
+    "owner": "Aquinas project",
+    "timestamp": "2026-09-18",
+    "affected_task_ids": ["QAT-01", "QAT-03", "QAT-04", "QAT-06", "QAT-07"]
+  }
+]
