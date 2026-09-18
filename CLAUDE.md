@@ -68,9 +68,9 @@ before physical-device model experiments.
   automatic Node Concept extraction, manual Insights, layout, relatedness, budding, Midpoint, and
   model seams.
 - [PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md](PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md) — the
-  SwiftData migration away from whole-snapshot `UserDefaults`, now implemented; its status section
-  distinguishes what's shipped from what remains (the dedicated Insights popup UI, in-place
-  field-level diffing, backend deletion-tombstone coordination).
+  planned SwiftData migration. The current iOS implementation uses an atomic Application Support
+  JSON snapshot with rotating backups and legacy `UserDefaults` migration; do not describe it as
+  SwiftData-backed.
 
 Implementation happens in the sibling repos: `../Aquinas-iOS` (SwiftUI app — has its own CLAUDE.md with build instructions) and `../Aquinas_Backend` (FastAPI + MLX model server). If a session here turns into code changes, prefer starting/continuing it from the repo being changed.
 

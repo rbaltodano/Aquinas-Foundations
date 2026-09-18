@@ -91,7 +91,7 @@ than invented. If the backend remains unavailable or output remains invalid, liv
 explicitly instead of substituting preview/mock knowledge. Definitions and canvas actions offer
 retry; failed Midpoint and Make Node work rolls back temporary Tree state.
 
-## 5. Question of the Day
+## 5. Home reflection and discovery
 
 Home shows one open-ended Question of the Day grounded in an unresolved idea, distinction,
 assumption, tension, consequence, or application from prior conversation. Generation consults
@@ -104,6 +104,19 @@ schedules a new `Consolidate information` task after the model has been idle for
 active status reads `Consolidating...`. Opening an active conversation does not cancel an already
 queued consolidation task. Failed generation does not persist a placeholder question and remains
 retryable.
+
+When a development backend is reachable, Home also fetches four optional, fail-quiet discovery
+cards scoped to the active non-study conversation (or the most recently created eligible one):
+
+- **Loose Thread** surfaces a related Node Concept worth returning to.
+- **Today in History** presents a date-specific historical prompt and opens a conversation with
+  its context when selected. It may link to a related existing Node Concept.
+- **Terms You Glossed Over** returns a contextual definition that deserves a second look.
+- **Your Quote** surfaces an original user synthesis saved by the background tree-analysis path.
+
+Each card is absent when the backend has no qualifying result or is unavailable; Home does not show
+an error state for these supplementary prompts. Today in History can be dismissed by answering it
+and stays hidden for the rest of that day.
 
 ## 6. Context controls and slash commands
 
@@ -156,25 +169,17 @@ from existing parent/Node connections.
 
 ## 8. Current persistence boundaries
 
-- iOS conversation/branch state is SwiftData-backed (`AquinasPersistence`, per
-  `PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md`): each conversation's branches, chat blocks, and
-  attachments are synced as their own rows by id rather than re-encoded into one whole-snapshot
-  `UserDefaults` blob on every save. Uploaded image bytes are written once to files under
-  Application Support instead of living inline in that blob. `CurrentConversationsStore` and
-  `InsightLibraryStore` keep their original `load()`/`save(_:)` call signatures, so this is a
-  storage swap behind an unchanged interface, not a call-site rewrite. A one-time migration
-  imports the old UserDefaults snapshot on first launch after this shipped.
-- Global Insight Library content is a first-class SwiftData table
-  (`PersistedInsightLibraryEntry`), not embedded inside any single conversation.
-- Conversation-to-global-Insight membership and pending tree-analysis IDs remain dedicated
-  `UserDefaults` stores by design — they hold only ID strings, never the transcript/image content
-  the migration exists to get off `UserDefaults`.
+- iOS conversation and branch state is a Codable JSON snapshot at
+  `Application Support/Aquinas/ConversationStore/conversations-v1.json`, written atomically by
+  `InquiryPersistenceStore`. It retains up to five rotating JSON backups and imports either legacy
+  `UserDefaults` snapshot on first successful load. It is no longer stored in `UserDefaults`, but
+  it is not yet normalized SwiftData storage.
+- The global Insight Library, conversation-to-global-Insight membership, and pending tree-analysis
+  IDs remain dedicated `UserDefaults` stores. The latter two hold only identifiers; the library
+  stores encoded contextual-definition records.
 - The backend SQLite database persists conversation-scoped definitions and Insight Tree content,
   embeddings, ownership, sparse edges, analyses, provenance, and tombstones.
 
-Not yet done: the dedicated cross-conversation Insights popup UI described in
-`PERSISTENT_MEMORY_IMPLEMENTATION_PLAN.md`'s "Insights Popup Integration" section is a new UI
-feature, not a persistence change, and remains separate follow-up work. True field-level diffing
-within an unchanged branch is also not implemented — a changed branch re-syncs its whole row tree,
-which is still far cheaper than the old top-level blob rewrite, but is not the finest possible
-granularity.
+Not yet done: the planned SwiftData migration, file-backed attachment storage, dedicated
+cross-conversation Insights popup, and backend deletion-tombstone coordination. The current
+snapshot abstraction keeps call sites insulated from the eventual storage replacement.
