@@ -93,5 +93,5 @@ a meaningful size/latency payoff, or after deterministic validation is proven an
 is already available. Prioritize checkpoint/data quality, production-path evaluation, and runtime
 optimization instead.
 
-See [Aquinas-QAT-DWQ-Writeup.md](Aquinas-QAT-DWQ-Writeup.md) for the full experiment history,
+See [Aquinas-QAT-DWQ-Writeup.md](research/Aquinas-QAT-DWQ-Writeup.md) for the full experiment history,
 memory analysis, retained tooling and patches, controlled-retry rejection, and final recommendation.

@@ -278,7 +278,7 @@ handoff rather than a same-session follow-up.
    `byteCount`/`sha256`, replace `Aquinas-iOS/Aquinas-iOS/LocalModels/gemma-4-E2B-it.litertlm`
    with the new file (gitignored dev seed, no repo tracking needed), and verify with
    `xcodebuild -project Aquinas-iOS.xcodeproj -scheme Aquinas-iOS -destination 'platform=iOS Simulator,name=iPhone 17' build`
-   from `/Users/ryanbaltodano/Developer/Aquinas-iOS`. Either way, append the outcome here.
+   from `../Aquinas-iOS`. Either way, append the outcome here.
 
 7. **Reconcile CLAUDE.md.** `Aquinas-iOS/CLAUDE.md` currently has two sections describing the
    production model that disagree: an older section (~lines 111-118) still describes the
@@ -418,7 +418,7 @@ fixed, and the current script still lacks cache controls and resumable checkpoin
    - If it passes: update `LiteRTModelManifest.aquinas` in
      `Aquinas-iOS/Aquinas-iOS/Services/LiteRTModelStore.swift:15-16`, replace the bundled dev
      seed file, verify with the standard `xcodebuild ... build` command from
-     `/Users/ryanbaltodano/Developer/Aquinas-iOS`.
+     `../Aquinas-iOS`.
    - Either way, append the real outcome here.
    - Reconcile `Aquinas-iOS/CLAUDE.md`'s two contradictory model sections (~111-118 vs
      ~226-228) regardless of the retrain's outcome — this is independent of whether the
